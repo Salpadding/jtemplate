@@ -1,0 +1,32 @@
+logging:
+  level:
+    org.springframework.security: debug
+
+spring:
+  security:
+    user:
+      name: user
+      password: password
+    oauth2:
+      authorizationserver:
+        client:
+          bookshop:
+            registration:
+              client-id: bookshop
+              client-secret: "{noop}01e95c1e710c2906323ffd74baacc585"
+              client-authentication-methods:
+                - client_secret_basic
+                - client_secret_post
+              authorization-grant-types:
+                - "authorization_code"
+                - "refresh_token"
+              redirect-uris:
+                - "https://bookshop.salpt.rs/callback"
+              post-logout-redirect-uris:
+                - "https://bookshop.salpt.rs"
+              scopes:
+                - "openid"
+                - "profile"
+                - "user"
+                - "email"
+            require-authorization-consent: true
