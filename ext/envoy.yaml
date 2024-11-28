@@ -76,6 +76,9 @@ static_resources:
                   - name: envoy.filters.http.ext_proc
                     typed_config:
                       '@type': type.googleapis.com/envoy.extensions.filters.http.ext_proc.v3.ExternalProcessor
+                      processing_mode:
+                        request_header_mode: SEND
+                        response_header_mode: SEND
                       grpc_service:
                         envoy_grpc:
                           cluster_name: envoyj

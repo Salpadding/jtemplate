@@ -1,8 +1,6 @@
 package com.example.envoyj
 
-import io.envoyproxy.envoy.service.ext_proc.v3.CommonResponse
 import io.envoyproxy.envoy.service.ext_proc.v3.ExternalProcessorGrpc
-import io.envoyproxy.envoy.service.ext_proc.v3.HeadersResponse
 import io.envoyproxy.envoy.service.ext_proc.v3.ProcessingRequest
 import io.envoyproxy.envoy.service.ext_proc.v3.ProcessingResponse
 import io.grpc.stub.StreamObserver
@@ -10,40 +8,25 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 @Component
-class ExtProcService : ExternalProcessorGrpc.ExternalProcessorImplBase() {
+class ExtProcService(val factory: FilterChainFactory) : ExternalProcessorGrpc.ExternalProcessorImplBase() {
     companion object {
         @JvmStatic
         val log = LoggerFactory.getLogger(ExtProcService::class.java)
     }
 
-
     override fun process(responseObserver: StreamObserver<ProcessingResponse>): StreamObserver<ProcessingRequest> {
-        return Observer(responseObserver)
+        return Observer(responseObserver, this.factory)
     }
 
-    class Observer(val client: StreamObserver<ProcessingResponse>) : StreamObserver<ProcessingRequest> {
+    class Observer(val client: StreamObserver<ProcessingResponse>, val factory: FilterChainFactory) :
+        StreamObserver<ProcessingRequest> {
         override fun onNext(value: ProcessingRequest?) {
             if (value == null) return
-            val res = when (value.requestCase) {
-                ProcessingRequest.RequestCase.REQUEST_HEADERS -> {
-                    val headers = value.requestHeaders
-                    headers.headers.headersList.forEach {
-                        println("header ${it.key} = ${it.value}")
-                    }
-                    val bd = ProcessingResponse.newBuilder()
-                    bd.requestHeaders =
-                        HeadersResponse.newBuilder().setResponse(CommonResponse.newBuilder().build()).build()
-                    bd.build()
-                }
-
-                else -> {
-                    val bd = ProcessingResponse.newBuilder()
-                    bd.responseHeaders =
-                        HeadersResponse.newBuilder().setResponse(CommonResponse.newBuilder().build()).build()
-                    bd.build()
-                }
-            }
-            client.onNext(res)
+            val res = ProcessingResponse.newBuilder()
+            val chain = factory.create()
+            factory.apply(chain, value, res)
+            val processed = res.build()
+            client.onNext(processed)
         }
 
         override fun onError(t: Throwable?) {
@@ -52,6 +35,5 @@ class ExtProcService : ExternalProcessorGrpc.ExternalProcessorImplBase() {
 
         override fun onCompleted() {
         }
-
     }
 }
