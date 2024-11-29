@@ -33,6 +33,7 @@ static_resources:
     - name: envoyj
       type: STATIC
       http2_protocol_options: { }
+      connect_timeout: 0.25s
       load_assignment:
         cluster_name: envoyj
         endpoints:
@@ -63,13 +64,20 @@ static_resources:
                       routes:
                           match: { prefix: ''}
                           route: { cluster: auth_server }
+#                      typed_per_filter_config:
+#                        envoy.filters.http.ext_proc:
+#                          '@type': 'type.googleapis.com/envoy.extensions.filters.http.ext_proc.v3.ExtProcPerRoute'
+#                          disabled: true
 
                     - name: bookshop
                       domains: ["bookshop.salpt.rs"]
                       routes:
                         match: { prefix: ''}
                         route: { cluster: bookshop }
-
+#                      typed_per_filter_config:
+#                        envoy.filters.http.ext_proc:
+#                          '@type': 'type.googleapis.com/envoy.extensions.filters.http.ext_proc.v3.ExtProcPerRoute'
+#                          disabled: true
 
                 http_filters:
                   # cookie compression

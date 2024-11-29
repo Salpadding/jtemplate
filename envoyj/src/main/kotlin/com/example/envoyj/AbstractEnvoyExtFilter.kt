@@ -16,25 +16,21 @@ import org.springframework.core.Ordered
 abstract class AbstractEnvoyExtFilter : EnvoyExtFilter, Ordered {
     interface ExtFilterChain {
         fun doFilter(request: ProcessingRequest, response: ProcessingResponse.Builder)
+        fun getRequestHeaders(): Map<String, List<String>>
+        fun getAuthority(): String
     }
 
     override fun doFilter(request: ServletRequest, response: ServletResponse?, chain: FilterChain) {
         val req = (request as EnvoyExtProcRequest).req
         val res = (request as EnvoyExtProcRequest).res
-        val next: ExtFilterChain = object : ExtFilterChain {
-            override fun doFilter(rq: ProcessingRequest, rs: ProcessingResponse.Builder) {
-                val newReq = EnvoyExtProcRequest(rq, rs)
-                chain.doFilter(newReq, response)
-            }
-        }
 
         when (req.requestCase) {
             ProcessingRequest.RequestCase.REQUEST_HEADERS -> {
-                onRequestHeaders(req, res, next)
+                onRequestHeaders(req, res, chain as ExtFilterChain)
             }
 
             ProcessingRequest.RequestCase.RESPONSE_HEADERS -> {
-                onResponseHeaders(req, res, next)
+                onResponseHeaders(req, res, chain as ExtFilterChain)
             }
 
             else -> {

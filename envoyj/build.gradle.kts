@@ -8,10 +8,6 @@ plugins {
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -22,10 +18,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-logging")
     implementation("io.envoyproxy.controlplane:api:1.0.46")
     implementation("io.envoyproxy.controlplane:server:1.0.46")
-    implementation("io.grpc:grpc-netty:1.62.2")
+    implementation("io.grpc:grpc-netty:1.68.0")
     implementation("org.apache.httpcomponents.client5:httpclient5:5.4")
     implementation("jakarta.servlet:jakarta.servlet-api")
-
+    implementation("com.github.js-cookie:java-cookie:0.0.2")
 }
 
 

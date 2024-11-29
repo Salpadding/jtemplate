@@ -30,7 +30,8 @@ class ExtProcService(val factory: FilterChainFactory) : ExternalProcessorGrpc.Ex
         }
 
         override fun onError(t: Throwable?) {
-            t?.let { log.error("", t) }
+            log.error("grpc error")
+            client.onCompleted()
         }
 
         override fun onCompleted() {

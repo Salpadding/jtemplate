@@ -3,10 +3,13 @@ package com.example.envoyj
 import io.envoyproxy.envoy.config.core.v3.HeaderValueOption.HeaderAppendAction
 import io.envoyproxy.envoy.service.ext_proc.v3.ProcessingRequest
 import io.envoyproxy.envoy.service.ext_proc.v3.ProcessingResponse
+import io.netty.handler.codec.http.cookie.ClientCookieDecoder
+import io.netty.handler.codec.http.cookie.ClientCookieEncoder
+import io.netty.handler.codec.http.cookie.ServerCookieDecoder
+import io.netty.handler.codec.http.cookie.ServerCookieEncoder
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.net.HttpCookie
-import java.security.SecureRandom
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -23,16 +26,19 @@ class CookieCompressor : AbstractEnvoyExtFilter() {
         response: ProcessingResponse.Builder,
         chain: ExtFilterChain
     ) {
+        val serverParser = ServerCookieDecoder.LAX
         val cookies = request.requestHeaders.headers.headersList.filter { it.key == "cookie" }.
-            flatMap { it.rawValue.toStringUtf8().split(";").
-            flatMap { HttpCookie.parse(it) } }
+            flatMap { serverParser.decodeAll(it.rawValue.toStringUtf8()) }
 
         if(cookies.isEmpty()) {
             chain.doFilter(request, response)
             return
         }
-        cookies.forEach { if(cache.contains(it.value)) { it.value = cache[it.value] } }
-        val joined = cookies.map { it.toString() }.joinToString(";")
+        cookies.forEach { c ->
+            cache[c.value()]?.let { c.setValue(it) }
+        }
+        val joined = ClientCookieEncoder.LAX.encode(cookies)
+        log.info("joined cookie = {}", joined)
         setRequestHeader(response, "cookie", joined, HeaderAppendAction.OVERWRITE_IF_EXISTS_OR_ADD_VALUE, false)
         chain.doFilter(request, response)
     }
@@ -43,22 +49,26 @@ class CookieCompressor : AbstractEnvoyExtFilter() {
         next: ExtFilterChain
     ) {
         val setCookie = request.responseHeaders.headers.headersList.filter { it.key == "set-cookie" }
-        val cookies: MutableList<HttpCookie> = mutableListOf()
-        if (setCookie.isNotEmpty()) {
-            setCookie.forEach {
-                val parsed = HttpCookie.parse(it.rawValue.toStringUtf8())
-                parsed.forEach {
-                    // avoid double quotes be appended
-                    it.version = 0
-                    if (it.value.length > 64) {
-                        val uuid = UUID.randomUUID().toString()
-                        cache[uuid] = it.value
-                        it.value = uuid
-                    }
-                    cookies.add(it)
-                }
+        val cookies: MutableList<Any> = mutableListOf()
+
+        setCookie.forEach {
+            if(it.rawValue.size() < 64) {
+                cookies.add(it.rawValue.toStringUtf8())
+                return@forEach
             }
+            val decoded = ClientCookieDecoder.LAX.decode(it.rawValue.toStringUtf8())
+            if(decoded.value().length < 64) {
+                cookies.add(it.rawValue.toStringUtf8())
+                return@forEach
+            }
+            val uuid = UUID.randomUUID().toString()
+            val prev = decoded.value()
+            decoded.setValue(uuid)
+            cache[uuid] = prev
+            cookies.add(ServerCookieEncoder.LAX.encode(decoded))
         }
+
+
         cookies.forEachIndexed { i, c ->
             val s = c.toString()
             log.info("set-cookie: {}", s)
@@ -80,6 +90,7 @@ class CookieCompressor : AbstractEnvoyExtFilter() {
                 )
             }
         }
+        log.info("do next")
         next.doFilter(request, response)
     }
 }
