@@ -1,0 +1,17 @@
+server:
+  port: 20005
+  servlet:
+    session:
+      cookie:
+        max-age: PT300S
+
+
+spring:
+  security:
+    user:
+      name: user
+      password: 'password'
+
+logging:
+  level:
+    'org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration': TRACE

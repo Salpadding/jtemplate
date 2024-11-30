@@ -1,0 +1,6 @@
+grpc:
+  port: 20002
+
+server:
+  port:
+    20003

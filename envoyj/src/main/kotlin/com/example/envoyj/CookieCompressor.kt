@@ -9,7 +9,6 @@ import io.netty.handler.codec.http.cookie.ServerCookieDecoder
 import io.netty.handler.codec.http.cookie.ServerCookieEncoder
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import java.net.HttpCookie
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -38,7 +37,7 @@ class CookieCompressor : AbstractEnvoyExtFilter() {
             cache[c.value()]?.let { c.setValue(it) }
         }
         val joined = ClientCookieEncoder.LAX.encode(cookies)
-        log.info("joined cookie = {}", joined)
+        log.debug("cookie joined = {}", joined)
         setRequestHeader(response, "cookie", joined, HeaderAppendAction.OVERWRITE_IF_EXISTS_OR_ADD_VALUE, false)
         chain.doFilter(request, response)
     }
@@ -71,26 +70,16 @@ class CookieCompressor : AbstractEnvoyExtFilter() {
 
         cookies.forEachIndexed { i, c ->
             val s = c.toString()
-            log.info("set-cookie: {}", s)
-            if (i == 0)
+            val action = if(i == 0) HeaderAppendAction.OVERWRITE_IF_EXISTS_OR_ADD_VALUE else
+                    HeaderAppendAction.APPEND_IF_EXISTS_OR_ADD_VALUE
                 setResponseHeader(
                     response,
                     "set-cookie",
                     s,
-                    HeaderAppendAction.OVERWRITE_IF_EXISTS_OR_ADD_VALUE,
-                    false
+                    action,
+                    i != 0
                 )
-            else {
-                setResponseHeader(
-                    response,
-                    "set-cookie",
-                    s,
-                    HeaderAppendAction.APPEND_IF_EXISTS_OR_ADD_VALUE,
-                    true
-                )
-            }
         }
-        log.info("do next")
         next.doFilter(request, response)
     }
 }

@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = "jtemplate"
-include("app", "auth","gateway","bookshop", "envoyj")
+include("app", "auth","gateway","bookshop", "envoyj", "http-basic-demo")
