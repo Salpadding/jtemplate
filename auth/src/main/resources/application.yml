@@ -1,2 +1,15 @@
 server:
   port: 20000
+
+
+logging:
+  logback:
+    rollingpolicy:
+      max-file-size: 1KB
+      max-history: 128
+  file:
+    name: logs/auth.log
+
+  structured:
+    format:
+      file: ecs

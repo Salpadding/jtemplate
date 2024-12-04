@@ -1,2 +1,12 @@
 app:
   ok: true
+
+logging:
+  level:
+    com.example.mvc.demo: TRACE
+
+  logback:
+    rollingpolicy:
+      file-name-pattern: auth.log
+      max-file-size: 32MB
+      max-history: 128
