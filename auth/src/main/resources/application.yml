@@ -1,11 +1,7 @@
-server:
-  port: 20000
-
-
 logging:
   logback:
     rollingpolicy:
-      max-file-size: 1KB
+      max-file-size: 32MB
       max-history: 128
   file:
     name: logs/auth.log

@@ -1,6 +1,16 @@
+server:
+  port: 20000
+  servlet:
+    session:
+      cookie:
+        max-age: PT3600S
+        #domain: http://127.0.0.1:20000
+        #name: auth-sessionid
+
 logging:
   level:
     org.springframework.security: debug
+
 
 spring:
   security:
@@ -30,3 +40,25 @@ spring:
                 - "user"
                 - "email"
             require-authorization-consent: true
+
+          local:
+            registration:
+              client-id: local
+              client-secret: "{noop}01e95c1e710c2906323ffd74baacc581"
+              client-authentication-methods:
+                - client_secret_basic
+                - client_secret_post
+              authorization-grant-types:
+                - "authorization_code"
+                - "refresh_token"
+              redirect-uris:
+                - "https://mix.salpt.rs/login/oauth2/code/local"
+              post-logout-redirect-uris:
+                - "https://bookshop.salpt.rs"
+              scopes:
+                - "openid"
+                - "profile"
+                - "user"
+                - "email"
+            require-authorization-consent: true
+        issuer: https://auth.salpt.rs

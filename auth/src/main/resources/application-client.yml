@@ -1,0 +1,34 @@
+server:
+  port: 20020
+  servlet:
+    session:
+      cookie:
+        max-age: PT3600S
+
+logging:
+  level:
+    org.springframework.security: trace
+
+spring:
+  security:
+    user:
+      name: user
+      password: password
+    oauth2:
+      client:
+        registration:
+          client:
+            client-id: client
+            client-name: client
+            client-secret: 01e95c1e710c2906323ffd74baacc581
+            redirect-uri: https://client.salpt.rs/login/oauth2/code/client
+            scope:
+              - openid
+              - profile
+              - user
+              - email
+        provider:
+          client:
+            issuer-uri: https://mix.salpt.rs
+
+
